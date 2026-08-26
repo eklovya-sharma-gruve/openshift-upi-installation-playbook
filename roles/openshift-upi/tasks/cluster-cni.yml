@@ -1,0 +1,73 @@
+---
+- name: Creating clife dir
+  ansible.builtin.file:
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}"
+    state: directory
+    owner: admnc
+    mode: '2775'
+- name: Checking CNI
+  ansible.builtin.get_url:
+    url: https://docs.isovalent.com/v1.17/public/clife/clife-v1.17.17.tar.gz
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}.tar.gz"
+- name: Unpack cilium manifests
+  ansible.builtin.unarchive:
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}"
+    src: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}.tar.gz"
+    remote_src: true
+    mode: '2775'
+- name: Edit subscription file
+  ansible.builtin.blockinfile:
+    insertafter: "^spec:$"
+    block: |2
+        config:
+          env:
+          - name : KUBERNETES_SERVICE_HOST
+            value: "api-int.{{ CLUSTER_NAME }}.{{ DOMAIN_NAME }}"
+          - name: KUBERNETES_SERVICE_PORT
+            value: "6443"
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}/subscription.yaml"
+    state: present
+- name: Edit deployment yaml
+  ansible.builtin.blockinfile:
+    insertafter: '^\s*env:$'
+    block: |2
+              - name : KUBERNETES_SERVICE_HOST
+                value: "api-int.{{ CLUSTER_NAME }}.{{ DOMAIN_NAME }}"
+              - name: KUBERNETES_SERVICE_PORT
+                value: "6443"
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}/apps_v1_deployment_clife-controller-manager.yaml"
+    state: present
+- name: Edit ciliumconfig
+  ansible.builtin.blockinfile:
+    block: |2
+        kubeProxyReplacement: true
+        k8sServiceHost: "api-int.{{ CLUSTER_NAME }}.{{ DOMAIN_NAME }}"
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}/ciliumconfig.yaml"
+    insertafter: "^spec:$"
+    state: present
+- name: Create network operator file
+  ansible.builtin.copy:
+    src: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/manifests/cluster-network-02-config.yml"
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/manifests/cluster-network-02-local-config.yml"
+- name: Create correct apiVersion
+  ansible.builtin.lineinfile:
+    regexp: "^apiVersion"
+    line: "apiVersion: operator.openshift.io/v1"
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/manifests/cluster-network-02-local-config.yml"
+    state: present
+- name: Modify network operator file
+  ansible.builtin.blockinfile:
+    insertafter: "^spec:$"
+    block: |2
+        deployKubeProxy: false
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/manifests/cluster-network-02-local-config.yml"
+    state: present
+- name: Copy cilium manifests to install dir
+  ansible.builtin.copy:
+    src: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}/"
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/manifests/"
+- name: Creating ignition files
+  ansible.builtin.command:
+    cmd: "./openshift-install create ignition-configs --dir=/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+    chdir: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+  become: false

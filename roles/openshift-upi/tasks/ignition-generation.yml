@@ -1,0 +1,13 @@
+---
+- name: Installing coreos installer
+  ansible.builtin.dnf:
+    name: coreos-installer
+    state: present
+- name: Create RHCOS image
+  ansible.builtin.command:
+    cmd: "coreos-installer iso customize --dest-device /dev/sda --network-keyfile /home/admnc/openshift-install-{{ CLUSTER_NAME }}/master{{ index + 1 }}.nmconnection --dest-ignition master.ign -o rhcos-master-{{ CLUSTER_NAME }}-{{ index + 1 }}.iso rhcos-live.iso"
+    chdir: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+  loop: "{{ masters }}"
+  loop_control:
+    index_var: index
+  become: false

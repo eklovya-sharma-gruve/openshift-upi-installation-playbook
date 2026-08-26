@@ -1,0 +1,25 @@
+- name: Get RHCOS ISO URL
+  ansible.builtin.shell:
+    cmd: >
+      ./openshift-install coreos print-stream-json |
+      jq -r --arg ARCH x86_64
+      '.architectures[$ARCH].artifacts.metal.formats.iso.disk.location'
+    chdir: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+  register: rhcos_iso_url
+  changed_when: false
+  become: false
+
+- name: Set RHCOS ISO URL
+  ansible.builtin.set_fact:
+    ISO_URL: "{{ rhcos_iso_url.stdout | trim }}"
+
+- name: Display RHCOS ISO URL
+  ansible.builtin.debug:
+    msg: "RHCOS ISO URL: {{ ISO_URL }}"
+
+- name: Download base RHCOS ISO
+  ansible.builtin.get_url:
+    url: "{{ ISO_URL }}"
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/rhcos-live.iso"
+    mode: "0644"
+  become: false

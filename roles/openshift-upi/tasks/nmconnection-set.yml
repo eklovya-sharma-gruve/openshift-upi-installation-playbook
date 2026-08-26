@@ -1,0 +1,8 @@
+---
+- name: Create bootstrap nmconnection files
+  ansible.builtin.template:
+    src: temp.nmconnection.j2
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/master{{ index + 1 }}.nmconnection"
+  loop: "{{ masters }}"
+  loop_control:
+    index_var: index

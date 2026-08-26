@@ -1,0 +1,41 @@
+---
+- name: Configuring all vars
+  hosts: localhost
+  become: true
+  vars_prompt:
+  	- name: API_VIP
+      	  prompt: Enter API_VIP for cluster
+          private: false
+	- name: INGRESS_VIP
+	  prompt: Enter INGRESS_VIP for cluster
+	  private: false
+	- name: MASTER_NODE_COUNT
+	  prompt: No. of control nodes
+	  private: false
+ 	- name: WORKER_NODE_COUNT
+          prompt: No. of worker nodes
+	  private: false
+	- name: CNI
+	  prompt: Choose CNI for cluster
+	  private: false
+	- name: DNS_SERVER
+	  prompt: Set DNS servers
+	  private: false
+	- name: GATEWAY_ADDRESS
+	  prompt: Set Gateway
+	  private: false
+	- name: OPENSHIFT_VERSION
+	  prompt: Enter openshift version needed
+	  private: false
+  tasks:
+  	- name: Setting network reqiurements
+      	  ansible.builtin.pause:
+	  	prompt: Enter IP for master{{ item }}
+	  	private: false
+	  register: master_ip
+	  loop: "{{ range(1, MASTER_NODE_COUNT+1) | list }}"
+	- name: User-friendly vars
+	  ansible.builtin.set_fact: 
+	  	masters: "{{ masters | default([]) + [{'ip': item.user_input}] }}"
+	  loop: "{{ master_ip.results }}"
+ 

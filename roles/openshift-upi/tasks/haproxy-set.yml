@@ -1,0 +1,59 @@
+---
+- name: Download HAProxy
+  ansible.builtin.dnf:
+    name:
+      - haproxy
+- name: Configure HAPROXY
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+- name: Configure Firewall
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+- name: Allow HAProxy ports in firewalld
+  become: true
+  ansible.posix.firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 6443
+    - 22623
+    - 8404
+    - 80
+    - 443
+- name: Check SELinux status
+  ansible.builtin.command: getenforce
+  register: selinux_status
+  changed_when: false
+- name: Install SELinux management tools
+  become: true
+  ansible.builtin.dnf:
+    name: policycoreutils-python-utils
+    state: present
+  when: selinux_status.stdout == "Enforcing"
+- name: Allow HAProxy ports in SELinux
+  become: true
+  community.general.seport:
+    ports:
+      - 6443
+      - 22623
+      - 8404
+      - 80
+      - 443
+    proto: tcp
+    setype: http_port_t
+    state: present
+  when: selinux_status.stdout == "Enforcing"
+- name: Restart and enable HAProxy
+  become: true
+  ansible.builtin.systemd:
+    name: haproxy
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  
+    

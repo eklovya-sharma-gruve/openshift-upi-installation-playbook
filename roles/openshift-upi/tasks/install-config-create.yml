@@ -1,0 +1,47 @@
+---
+- name: Create install directory
+  ansible.builtin.file:
+    # path: "{{ ansible_env.HOME }}/openshift-install-{{ CLUSTER_NAME }}"
+    path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+    state: directory
+    #owner: "{{ ansible_user_id }}"
+    owner: "admnc"
+    mode: '2775'
+  become: true
+- name: Install openshift install binary
+  ansible.builtin.get_url:
+    url: "https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ OPENSHIFT_VERSION }}/openshift-install-linux.tar.gz"
+    dest: "/home/admnc//openshift-install-{{ CLUSTER_NAME }}/openshift-install.tar.gz"
+  become: false
+- name: Read OpenShift pull secret
+  ansible.builtin.slurp:
+    src: "{{ PULL_SECRET_FILE }}"
+  register: pull_secret_file
+- name: Convert pull secret to variable
+  ansible.builtin.set_fact:
+    PULL_SECRET: "{{ pull_secret_file.content | b64decode | from_json }}"
+- name: Read SSH public key
+  ansible.builtin.slurp:
+    src: "{{ SSH_KEY_FILE }}"
+  register: ssh_public_key_file
+- name: Set SSH public key variable
+  ansible.builtin.set_fact:
+    SSH_KEY: "{{ ssh_public_key_file.content | b64decode | trim }}"
+- name: Extract openshift-install and make it executable
+  become: false
+  ansible.builtin.unarchive:
+    src: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/openshift-install.tar.gz"
+    dest: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+    mode: '2775'
+    remote_src: true
+- name: Create install config for cluster
+  ansible.builtin.template:
+    src: install-config.yaml.j2
+    dest: "/home/admnc/openshift-install-{{CLUSTER_NAME }}/install-config.yaml"
+  become: false
+- name: Create manifests
+  ansible.builtin.command: 
+    cmd: "./openshift-install create manifests --dir=/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+    chdir: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}"
+  become: false
+

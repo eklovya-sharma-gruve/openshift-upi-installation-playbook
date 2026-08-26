@@ -1,0 +1,86 @@
+global
+    log 127.0.0.1 local2
+    daemon
+    maxconn 4000
+
+defaults
+    mode tcp
+    log global
+    option dontlognull
+    option tcp-check
+
+    timeout connect 10s
+    timeout client 1m
+    timeout server 1m
+
+
+###############################################################################
+# OpenShift API (6443)
+###############################################################################
+
+frontend api-server
+    bind {{ API_VIP }}:6443
+    default_backend api-server
+
+backend api-server
+    balance roundrobin
+{% for master in masters %}
+    server ctrl{{ loop.index }} {{ master.ip }}:6443 check
+{% endfor %}
+
+
+###############################################################################
+# Machine Config Server (22623)
+###############################################################################
+
+frontend machine-config-server
+    bind {{ API_VIP }}:22623
+    default_backend machine-config-server
+
+backend machine-config-server
+    balance roundrobin
+{% for master in masters %}
+    server ctrl{{ loop.index }} {{ master.ip }}:22623 check
+{% endfor %}
+
+
+###############################################################################
+# OpenShift Ingress HTTP (80)
+###############################################################################
+
+frontend ingress-http
+    bind {{ INGRESS_VIP }}:80
+    default_backend ingress-http
+
+backend ingress-http
+    balance roundrobin
+{% for master in masters %}
+    server ctrl{{ loop.index }} {{ master.ip }}:80 check
+{% endfor %}
+
+
+###############################################################################
+# OpenShift Ingress HTTPS (443)
+###############################################################################
+
+frontend ingress-https
+    bind {{ INGRESS_VIP }}:443
+    default_backend ingress-https
+
+backend ingress-https
+    balance roundrobin
+{% for master in masters %}
+    server ctrl{{ loop.index }} {{ master.ip }}:443 check
+{% endfor %}
+
+
+###############################################################################
+# HAProxy Statistics
+###############################################################################
+
+listen stats
+    bind {{ API_VIP }}:8404
+    mode http
+    stats enable
+    stats uri /stats
+    stats refresh 10s

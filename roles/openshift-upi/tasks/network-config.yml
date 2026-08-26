@@ -1,0 +1,16 @@
+---
+- name: Configure network connection
+  community.general.nmcli:
+    conn_name: ens192
+    type: ethernet
+    ifname: ens192
+    ip4: 
+      - "{{ API_VIP }}/24"
+      - "{{ INGRESS_VIP }}/24"
+    gw4: "{{ GATEWAY_ADDRESS }}"
+    dns4: "{{ DNS_SERVER.split(',') | map('trim') | list }}"
+    state: present
+- name: Bring ens192 connection up
+  ansible.builtin.command:
+    cmd: nmcli connection up ens192
+  changed_when: true

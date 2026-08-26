@@ -1,0 +1,17 @@
+---
+- name: Creating vars
+  ansible.builtin.include_tasks: input-set.yml
+- name: Create network for machine
+  ansible.builtin.include_tasks: network-config.yml
+- name: Creating haproxy
+  ansible.builtin.include_tasks: haproxy-set.yml
+- name: Creating Install config.yml
+  ansible.builtin.include_tasks: install-config-create.yml
+- name: Configuring Cilium manifests
+  ansible.builtin.include_tasks: cluster-cni.yml
+- name: Configure network managment file
+  ansible.builtin.include_tasks: nmconnection-set.yml
+- name: Getting RHCOS live image
+  ansible.builtin.include_tasks: rhcos-image.yml
+- name: Create ignition files
+  ansible.builtin.include_tasks: ignition-generation.yml

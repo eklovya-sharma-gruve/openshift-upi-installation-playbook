@@ -1,0 +1,55 @@
+---
+- name: Creating cluster using role
+  hosts: localhost
+  become: true
+  vars_prompt:
+    - name: API_VIP
+      prompt: Enter API_VIP for cluster
+      private: false
+    - name: INGRESS_VIP
+      prompt: Enter INGRESS_VIP for cluster
+      private: false
+    - name: MASTER_NODE_COUNT
+      prompt: No. of control nodes
+      private: false
+    - name: WORKER_NODE_COUNT
+      prompt: No. of worker nodes
+      private: false
+    - name: CNI
+      prompt: Choose CNI for cluster
+      private: false
+    - name: DNS_SERVER
+      prompt: Set DNS servers
+      private: false
+    - name: GATEWAY_ADDRESS
+      prompt: Set Gateway
+      private: false
+    - name: OPENSHIFT_VERSION
+      prompt: Enter openshift version needed
+      private: false
+    - name: DOMAIN_NAME
+      prompt: Enter domain name
+      private: false
+    - name: CLUSTER_NAME
+      prompt: Enter cluster name
+      private: false
+    - name: PULL_SECRET_FILE
+      prompt: Enter pull secret file path
+      private: false
+    - name: SSH_KEY_FILE
+      prompt: Enter your ssh key file path
+      private: false
+    - name: CLUSTER_NETWORK
+      prompt: Enter cluster network with subnet
+      private: false
+    - name: SERVICE_NETWORK
+      prompt: Enter service network for pods
+      private: false
+    - name: MACHINE_NETWORK
+      prompt: Enter machine network
+      private: false
+    - name: HOST_PREFIX
+      prompt: Enter host prefix
+      private: false
+  roles:
+    - openshift-upi

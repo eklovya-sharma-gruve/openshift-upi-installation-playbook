@@ -1,0 +1,23 @@
+---
+- name: Setting network reqiurements
+  ansible.builtin.pause:
+    prompt: Enter IP for master{{ item }}
+  register: master_ip
+  loop: "{{ range(1, MASTER_NODE_COUNT | int + 1) | list }}"
+- name: Getting MAC Addresses
+  ansible.builtin.pause:
+    prompt: Enter MAC Addresses for masters
+  register: master_mac
+  loop: "{{ range(1, MASTER_NODE_COUNT |int + 1) | list }}"
+- name: Checking vars
+  ansible.builtin.debug:
+    msg: "{{ master_ip.results }}"
+- name: User-friendly vars
+  ansible.builtin.set_fact:
+    masters: "{{ masters | default([]) + [{'ip': item.user_input}] }}"
+  loop: "{{ master_ip.results }}"
+- name: User-friendly mac vars
+  ansible.builtin.set_fact:
+    masters_mac: "{{ masters_mac | default([]) + [{'mac': item.user_input}] }}"
+  loop: "{{ master_mac.results }}"
+    
