@@ -42,6 +42,7 @@
     block: |2
         kubeProxyReplacement: true
         k8sServiceHost: "api-int.{{ CLUSTER_NAME }}.{{ DOMAIN_NAME }}"
+        k8sServicePort: "6443"
     path: "/home/admnc/openshift-install-{{ CLUSTER_NAME }}/clife-{{ CLUSTER_NAME }}/ciliumconfig.yaml"
     insertafter: "^spec:$"
     state: present

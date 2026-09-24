@@ -5,8 +5,8 @@ interface-name=ens192
 autoconnect=true
 [ipv4]
 method=manual
-addresses="{{ item.ip }}/24"
-gateway="{{ GATEWAY_ADDRESS }}"
-dns="{{ DNS_SERVER }}"
+addresses={{ item.ip }}/24
+gateway={{ GATEWAY_ADDRESS }}
+dns={{ DNS_SERVER }};
 [ipv6]
 method=disabled
